@@ -105,9 +105,7 @@ var get_slack = function (e) {
       userId = PropertiesService.getScriptProperties().getProperty('userId');
       text = text[0];
     }
-    this.sk.postSlackMessage(userId);
     this.ln.send_line(userId, text);
-    this.sk.postSlackMessage(userId);
   };
   
   /**
