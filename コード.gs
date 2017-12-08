@@ -28,12 +28,12 @@ var sheet = function () {
 
   this.setvalue = function (row, column, value) {
     this.sheet.getRange(row, column).setValue(value);
-  }
+  };
 
   this.getvalue = function (row, column) {
     this.value = this.sheet.getRange(row, column).getValue();
     return this.value;
-  }
+  };
 
   this.delete_row = function (row) {
     // for return 0
@@ -42,11 +42,11 @@ var sheet = function () {
     } catch (e) {
       Logger.log(e);
     }
-  }
+  };
 
   this.get_last_row = function () {
     return this.sheet.getLastRow();
-  }
+  };
 
   /**
    * Find place of same text
@@ -56,7 +56,7 @@ var sheet = function () {
       if (this.getvalue(row, column) == value) return row;
     }
     return 0;
-  }
+  };
 };
 
 var send_line = function (e) {
@@ -73,34 +73,10 @@ var send_line = function (e) {
    */
   this.get_text = function (slack) {
     if (slack.trigger_word != undefined) this.text = slack.text.replace(slack.trigger_word, '');
-    else this.text = slack.text
-    return this.text
-  }
+    else this.text = slack.text;
+    return this.text;
+  };
 
-  /**
-   * Send message to LINE.
-   */
-  this.send_line = function (text) {
-    this.token = PropertiesService.getScriptProperties().getProperty('CHANNEL_ACCESS_TOKEN');
-    this.url = "https://api.line.me/v2/bot/message/push";
-    this.headers = {
-      'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': 'Bearer ' + token,
-    };
-    this.postData = {
-      "to": user_id,
-      "messages": [{
-        'type': 'text',
-        'text': text
-      }]
-    };
-    this.options = {
-      "method": "post",
-      "headers": headers,
-      "payload": JSON.stringify(this.postData)
-    };
-    UrlFetchApp.fetch(this.url, this.options);
-  }
 };
 
 var line = function (e) {
@@ -120,19 +96,20 @@ var line = function (e) {
    * Main function.
    */
   this.main = function () {
+    var profile;
     switch (this.line.type) {
       case 'follow':
-        this.profile = this.get_line_profile(this.line);
-        this.sk.postSlackMessage('```follow```', this.profile);
+        profile = this.get_line_profile(this.line);
+        this.sk.postSlackMessage('```follow```', profile);
         // set sheet
         this.sh.setvalue(this.last_row + 1, 1, this.last_row);
         this.sh.setvalue(this.last_row + 1, 2, this.line.source.userId);
-        this.sh.setvalue(this.last_row + 1, 3, this.profile.displayName);
+        this.sh.setvalue(this.last_row + 1, 3, profile.displayName);
         break;
       case 'unfollow':
-        this.profile = this.get_line_profile(this.line);
-        this.sk.postSlackMessage('```unfollow```', this.profile);
-        // sheet delete
+        profile = this.get_line_profile(this.line);
+        this.sk.postSlackMessage('```unfollow```', profile);
+        // Deletes the row of the user ID.
         this.sh.delete_row(this.sh.find_row(2, this.line.source.userId));
         break;
       case 'join':
@@ -142,10 +119,10 @@ var line = function (e) {
         this.sk.postSlackMessage('Leave group: ' + this.line.source.groupId);
         break;
       case 'message':
-        this.profile = this.get_line_profile(this.line);
+        profile = this.get_line_profile(this.line);
         switch (this.line.source.type) {
           case 'user':
-            this.sk.postSlackMessage(this.get_line_message(this.line), this.profile);
+            this.sk.postSlackMessage(this.get_line_message(this.line), profile);
             break;
           case 'group':
             break;
@@ -157,7 +134,7 @@ var line = function (e) {
         this.sk.postSlackMessage(this.line);
         break;
     }
-  }
+  };
 
   /**
    * Get line Message.
@@ -181,47 +158,72 @@ var line = function (e) {
       default:
         return 0;
     }
-  }
+  };
 
   /**
    * Get url of Drive files.
    */
   this.get_url_of_drive_files = function (message_id) {
-    this.url = 'https://api.line.me/v2/bot/message/' + message_id + '/content';
-    this.blob = UrlFetchApp.fetch(this.url, this.options);
-    this.file = DriveApp.createFile(this.blob);
-    return this.file.getUrl();
-  }
+    var url = 'https://api.line.me/v2/bot/message/' + message_id + '/content';
+    var blob = UrlFetchApp.fetch(url, this.options);
+    var file = DriveApp.createFile(blob);
+    return file.getUrl();
+  };
 
 
   /**
    * Get line profile.
    */
   this.get_line_profile = function (line) {
+    var url, response, profile;
     switch (line.source.type) {
       case 'user':
-        this.url = 'https://api.line.me/v2/bot/profile/' + line.source.userId;
+        url = 'https://api.line.me/v2/bot/profile/' + line.source.userId;
         break;
       case 'group':
-        this.url = 'https://api.line.me/v2/bot/group/' + line.source.groupId + '/member/' + line.source.userId;
+        url = 'https://api.line.me/v2/bot/group/' + line.source.groupId + '/member/' + line.source.userId;
         break;
       case 'room':
-        this.url = 'https://api.line.me/v2/bot/room/' + line.source.groupId + '/member/' + line.source.userId;
+        url = 'https://api.line.me/v2/bot/room/' + line.source.groupId + '/member/' + line.source.userId;
         break;
     }
     try {
-      this.response = UrlFetchApp.fetch(this.url, this.options);
-      this.profile = JSON.parse(this.response.getContentText());
+      response = UrlFetchApp.fetch(url, this.options);
+      profile = JSON.parse(response.getContentText());
     } catch (e) {
       this.sk.postSlackMessage(e);
     }
-    return this.profile;
-  }
+    return profile;
+  };
+
+  /**
+   * Send message to LINE.
+   */
+  this.send_line = function (text) {
+    var url = "https://api.line.me/v2/bot/message/push";
+    var headers = {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer ' + this.token,
+    };
+    var postData = {
+      "to": user_id,
+      "messages": [{
+        'type': 'text',
+        'text': text
+      }]
+    };
+    var options = {
+      "method": "post",
+      "headers": headers,
+      "payload": JSON.stringify(postData)
+    };
+    UrlFetchApp.fetch(url, options);
+  };
 
 };
 
 /**
- * Slack Class.
+ * Post Slack Class.
  */
 var slack = function () {
   var token = PropertiesService.getScriptProperties().getProperty('SLACK_LEGACY_TOKEN');
