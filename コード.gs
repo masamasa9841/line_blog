@@ -14,9 +14,11 @@ function doPost(e) {
 }
 
 function test() {
-  var sh = new sheet();
-  Logger.log(sh.find_row(1, 3));
-  sh.delete_row(sh.find_row(1, 3));
+  var sk = new slack();
+  sk.postSlackMessage('hoge');
+  //var sh = new sheet();
+  //Logger.log(sh.find_row(1, 3));
+  //sh.delete_row(sh.find_row(1, 3));
 }
 
 
