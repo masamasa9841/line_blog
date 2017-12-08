@@ -1,0 +1,24 @@
+{
+  "name": "line_blog",
+  "version": "1.0.0",
+  "description": "",
+  "main": "コード.js",
+  "dependencies": {
+    "eslint": "^4.12.1",
+    "jshint": "^2.9.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/masamasa9841/line_blog.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/masamasa9841/line_blog/issues"
+  },
+  "homepage": "https://github.com/masamasa9841/line_blog#readme"
+}
