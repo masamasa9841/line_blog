@@ -2,7 +2,7 @@ function doPost(e) {
   if (e.parameter.text != undefined) {
     var sl = new get_slack(e);
     sl.main();
-    
+
   } else {
     var ln = new line(e);
     ln.main();
@@ -15,15 +15,14 @@ function doPost(e) {
 var sheet = function () {
   this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   this.sheet = this.spreadsheet.getSheets()[0];
-  this.sk = new slack();
-  
+
   /**
   * Set value.
   */
   this.setvalue = function (row, column, value) {
     this.sheet.getRange(row, column).setValue(value);
   };
-  
+
   /**
   * Get value.
   */
@@ -31,7 +30,7 @@ var sheet = function () {
     var value = this.sheet.getRange(row, column).getValue();
     return value;
   };
-  
+
   /**
   * Delete row.
   */
@@ -43,14 +42,14 @@ var sheet = function () {
       Logger.log(e);
     }
   };
-  
+
   /**
   * Get last row.
   */
   this.get_last_row = function () {
     return this.sheet.getLastRow();
   };
-  
+
   /**
   * Find row of same text
   */
@@ -60,7 +59,7 @@ var sheet = function () {
     }
     return 0;
   };
-  
+
 };
 
 /**
@@ -70,15 +69,15 @@ var get_slack = function (e) {
   this.slack = e.parameter;
   this.ln = new line();
   this.sh = new sheet();
-  
+
   /**
   * Main function.
-  */  
+  */
   this.main = function () {
     var text = this.get_text(this.slack);
     var userId;
     if (text[1] != undefined) { // @unko: ~~~~~~~~~~~~
-      userId = this.sh.getvalue(this.sh.find_row(3, text[1]),2);
+      userId = this.sh.getvalue(this.sh.find_row(3, text[1]), 2);
       PropertiesService.getScriptProperties().setProperty('userId', userId);
       text = text[2];
     }
@@ -88,7 +87,7 @@ var get_slack = function (e) {
     }
     this.ln.send_line(userId, text);
   };
-  
+
   /**
   * Get text.
   * return array.
@@ -100,10 +99,10 @@ var get_slack = function (e) {
     text = text.split(/@([\s\S]*?):/);
     // if (text[0] == '') text = text[2];
     // else text = text[0];
-    
+
     return text;
   };
-  
+
 };
 
 /**
@@ -121,7 +120,7 @@ var line = function (e) {
   this.sk = new slack();
   this.sh = new sheet();
   this.last_row = this.sh.get_last_row();
-  
+
   /**
   * Main function.
   */
@@ -165,7 +164,7 @@ var line = function (e) {
         break;
     }
   };
-  
+
   /**
   * Get line Message.
   */
@@ -189,7 +188,7 @@ var line = function (e) {
         return 0;
     }
   };
-  
+
   /**
   * Get url of Drive files.
   */
@@ -199,8 +198,8 @@ var line = function (e) {
     var file = DriveApp.createFile(blob);
     return file.getUrl();
   };
-  
-  
+
+
   /**
   * Get line profile.
   */
@@ -225,7 +224,7 @@ var line = function (e) {
     }
     return profile;
   };
-  
+
   /**
   * Send message to LINE.
   */
@@ -249,7 +248,7 @@ var line = function (e) {
     };
     UrlFetchApp.fetch(url, options);
   };
-  
+
 };
 
 /**
@@ -259,7 +258,7 @@ var slack = function () {
   var token = PropertiesService.getScriptProperties().getProperty('SLACK_LEGACY_TOKEN');
   this.slackApp = SlackApp.create(token);
   this.channels = '#random';
-  
+
   /**
   * Post Slack message.
   */
@@ -273,7 +272,7 @@ var slack = function () {
     }
     this.slackApp.postMessage(this.channels, mes, options);
   };
-  
+
   /**
   * Post Slack Files.
   */
