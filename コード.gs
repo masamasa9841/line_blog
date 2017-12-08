@@ -1,12 +1,12 @@
 function doPost(e) {
   if (e.parameter.text != undefined) {
-    var sl = new send_line(e);
+    var sl = new get_slack(e);
     try {
       sl.main();
-    } catch (e) {
-      this.sk.postSlackMessage(e);
+    } catch (eee) {
+      this.sk.postSlackMessage(eee);
     }
-
+    
   } else {
     var ln = new line(e);
     ln.main();
@@ -21,22 +21,33 @@ function test() {
   //sh.delete_row(sh.find_row(1, 3));
 }
 
-
+/**
+* Sheet Class.
+*/
 var sheet = function () {
   this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   this.sheet = this.spreadsheet.getSheets()[0];
   this.sk = new slack();
   // this.sk.postSlackMessage(this.last_row);
-
+  
+  /**
+  * Set value.
+  */
   this.setvalue = function (row, column, value) {
     this.sheet.getRange(row, column).setValue(value);
   };
-
+  
+  /**
+  * Get value.
+  */
   this.getvalue = function (row, column) {
-    this.value = this.sheet.getRange(row, column).getValue();
-    return this.value;
+    var value = this.sheet.getRange(row, column).getValue();
+    return value;
   };
-
+  
+  /**
+  * Delete row.
+  */
   this.delete_row = function (row) {
     // for return 0
     try {
@@ -45,45 +56,83 @@ var sheet = function () {
       Logger.log(e);
     }
   };
-
+  
+  /**
+  * Get last row.
+  */
   this.get_last_row = function () {
     return this.sheet.getLastRow();
   };
-
+  
   /**
-   * Find place of same text
-   */
+  * Find row of same text
+  */
   this.find_row = function (column, value) {
     for (var row = 1; row <= this.get_last_row(); row++) {
       if (this.getvalue(row, column) == value) return row;
     }
     return 0;
   };
+  
 };
 
-var send_line = function (e) {
+/**
+* Webhook slack class.
+*/
+var get_slack = function (e) {
   this.slack = e.parameter;
   this.sk = new slack();
-
-  this.main = function () {
-    this.text = this.get_text(this.slack);
-    this.sk.postSlackMessage(this.text);
+  try {
+    this.ln = new line();
   }
-
+  catch(eee) {
+    this.sk.postSlackMessage(eee);
+  }
+  this.sh = new sheet();
+  
   /**
-   * Get text.
-   */
-  this.get_text = function (slack) {
-    if (slack.trigger_word != undefined) this.text = slack.text.replace(slack.trigger_word, '');
-    else this.text = slack.text;
-    return this.text;
+  * Main function.
+  */  
+  this.main = function () {
+    var text = this.get_text(this.slack);
+    var userId;
+    if (text[1] != undefined) { // @unko: ~~~~~~~~~~~~
+      userId = this.sh.getvalue(this.sh.find_row(3, text[1]),2);
+      PropertiesService.getScriptProperties().setProperty('userId', userId);
+      text = text[2];
+    }
+    else {
+      userId = PropertiesService.getScriptProperties().getProperty('userId');
+      text = text[0];
+    }
+    this.sk.postSlackMessage(userId);
+    this.ln.send_line(userId, text);
+    this.sk.postSlackMessage(userId);
   };
+  
+  /**
+  * Get text.
+  * return array.
+  */
+  this.get_text = function (slack) {
+    var text;
+    if (slack.trigger_word != undefined) text = slack.text.replace(slack.trigger_word, '');
+    else text = slack.text;
+    text = text.split(/@([\s\S]*?):/);
+    // if (text[0] == '') text = text[2];
+    // else text = text[0];
 
+    return text;
+  };
+  
 };
 
+/**
+* Line Class.
+*/
 var line = function (e) {
   this.token = PropertiesService.getScriptProperties().getProperty('CHANNEL_ACCESS_TOKEN');
-  this.line = JSON.parse(e.postData.contents).events[0];
+  if (e != undefined) this.line = JSON.parse(e.postData.contents).events[0];
   this.headers = {
     'Authorization': 'Bearer ' + this.token
   };
@@ -93,10 +142,10 @@ var line = function (e) {
   this.sk = new slack();
   this.sh = new sheet();
   this.last_row = this.sh.get_last_row();
-
+  
   /**
-   * Main function.
-   */
+  * Main function.
+  */
   this.main = function () {
     var profile;
     switch (this.line.type) {
@@ -137,10 +186,10 @@ var line = function (e) {
         break;
     }
   };
-
+  
   /**
-   * Get line Message.
-   */
+  * Get line Message.
+  */
   this.get_line_message = function (line) {
     switch (line.message.type) {
       case 'text':
@@ -161,21 +210,21 @@ var line = function (e) {
         return 0;
     }
   };
-
+  
   /**
-   * Get url of Drive files.
-   */
+  * Get url of Drive files.
+  */
   this.get_url_of_drive_files = function (message_id) {
     var url = 'https://api.line.me/v2/bot/message/' + message_id + '/content';
     var blob = UrlFetchApp.fetch(url, this.options);
     var file = DriveApp.createFile(blob);
     return file.getUrl();
   };
-
-
+  
+  
   /**
-   * Get line profile.
-   */
+  * Get line profile.
+  */
   this.get_line_profile = function (line) {
     var url, response, profile;
     switch (line.source.type) {
@@ -197,18 +246,18 @@ var line = function (e) {
     }
     return profile;
   };
-
+  
   /**
-   * Send message to LINE.
-   */
-  this.send_line = function (text) {
+  * Send message to LINE.
+  */
+  this.send_line = function (id, text) {
     var url = "https://api.line.me/v2/bot/message/push";
     var headers = {
       'Content-Type': 'application/json; charset=UTF-8',
       'Authorization': 'Bearer ' + this.token,
     };
     var postData = {
-      "to": user_id,
+      "to": id,
       "messages": [{
         'type': 'text',
         'text': text
@@ -221,20 +270,20 @@ var line = function (e) {
     };
     UrlFetchApp.fetch(url, options);
   };
-
+  
 };
 
 /**
- * Post Slack Class.
- */
+* Post Slack Class.
+*/
 var slack = function () {
   var token = PropertiesService.getScriptProperties().getProperty('SLACK_LEGACY_TOKEN');
   this.slackApp = SlackApp.create(token);
   this.channels = '#random';
-
+  
   /**
-   * Post Slack message.
-   */
+  * Post Slack message.
+  */
   this.postSlackMessage = function (mes, profile) {
     var options;
     if (profile != undefined) {
@@ -245,10 +294,10 @@ var slack = function () {
     }
     this.slackApp.postMessage(this.channels, mes, options);
   };
-
+  
   /**
-   * Post Slack Files.
-   */
+  * Post Slack Files.
+  */
   this.postSlackFiles = function (image) {
     var options = {
       channels: this.channels
