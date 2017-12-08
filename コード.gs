@@ -1,24 +1,12 @@
 function doPost(e) {
   if (e.parameter.text != undefined) {
     var sl = new get_slack(e);
-    try {
-      sl.main();
-    } catch (eee) {
-      this.sk.postSlackMessage(eee);
-    }
+    sl.main();
     
   } else {
     var ln = new line(e);
     ln.main();
   }
-}
-
-function test() {
-  var sk = new slack();
-  sk.postSlackMessage('hoge');
-  //var sh = new sheet();
-  //Logger.log(sh.find_row(1, 3));
-  //sh.delete_row(sh.find_row(1, 3));
 }
 
 /**
@@ -28,7 +16,6 @@ var sheet = function () {
   this.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   this.sheet = this.spreadsheet.getSheets()[0];
   this.sk = new slack();
-  // this.sk.postSlackMessage(this.last_row);
   
   /**
   * Set value.
@@ -81,13 +68,7 @@ var sheet = function () {
 */
 var get_slack = function (e) {
   this.slack = e.parameter;
-  this.sk = new slack();
-  try {
-    this.ln = new line();
-  }
-  catch(eee) {
-    this.sk.postSlackMessage(eee);
-  }
+  this.ln = new line();
   this.sh = new sheet();
   
   /**
@@ -119,7 +100,7 @@ var get_slack = function (e) {
     text = text.split(/@([\s\S]*?):/);
     // if (text[0] == '') text = text[2];
     // else text = text[0];
-
+    
     return text;
   };
   
